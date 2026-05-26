@@ -1,4 +1,4 @@
-"use client"; // Necesario para usar hooks y Supabase
+"use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
@@ -24,8 +24,8 @@ interface Producto {
   precio: number;
   imagen: string | null;
   creado_en: string;
-  admin: AdminUser[] | AdminUser | null;
-  categoria: Categoria[] | Categoria | null;
+  admin: any; // 👈 Cambiado a any para evitar conflictos de desestructuración con Supabase en Build
+  categoria: any; // 👈 Cambiado a any
 }
 
 export default function AdminGlobalPanelPage() {
@@ -35,7 +35,6 @@ export default function AdminGlobalPanelPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string>("");
 
-  // 🔒 Verifica la identidad del Súper Usuario antes de apagar el cargador
   useEffect(() => {
     const verificarAdminMaestro = async () => {
       try {
@@ -46,16 +45,14 @@ export default function AdminGlobalPanelPage() {
           return;
         } 
         
-        // 🛠️ CONDICIÓN ACTUALIZADA CON TU NUEVO USUARIO
         if (data.user.email !== "tu_nuevo_correo@dominio.com") {
-          console.warn("⚠️ Acceso denegado para:", data.user.email);
           router.push("/login");
           return;
         } 
         
         await Promise.all([fetchProductos(), fetchAdministradores()]);
       } catch (err) {
-        console.error("Error en la verificación:", err);
+        console.error(err);
         router.push("/login");
       } finally {
         setLoading(false);
@@ -82,10 +79,9 @@ export default function AdminGlobalPanelPage() {
       .order("creado_en", { ascending: false });
 
     if (error) {
-      console.error(error.message);
       setMessage("❌ Error al cargar productos globales");
     } else if (data) {
-      setProductos(data as unknown as Producto[]);
+      setProductos(data as any[]);
     }
   };
 
@@ -96,7 +92,6 @@ export default function AdminGlobalPanelPage() {
       .order("nombre", { ascending: true });
 
     if (error) {
-      console.error(error.message);
       setMessage("❌ Error al cargar administradores");
     } else if (data) {
       setAdministradores(data);
@@ -153,13 +148,13 @@ export default function AdminGlobalPanelPage() {
     setAdministradores(prev => prev.map(a => a.id === id ? { ...a, [campo]: value } : a));
   };
 
-  const obtenerNombreAdmin = (adm: AdminUser[] | AdminUser | null) => {
+  const obtenerNombreAdmin = (adm: any) => {
     if (!adm) return "Desconocido";
     if (Array.isArray(adm)) return adm[0]?.nombre ?? "Desconocido";
     return adm.nombre ?? "Desconocido";
   };
 
-  const obtenerNombreCategoria = (cat: Categoria[] | Categoria | null) => {
+  const obtenerNombreCategoria = (cat: any) => {
     if (!cat) return "Sin categoría";
     if (Array.isArray(cat)) return cat[0]?.nombre ?? "Sin categoría";
     return cat.nombre ?? "Sin categoría";
